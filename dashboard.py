@@ -57,16 +57,18 @@ with col1:
             label="Jumlah Data Tahun 2025",
             value=f"{ambil_2025:,}",
             delta=f"{delta_persen:.2f}%",
-            delta_color="normal"
+            delta_color="normal",
+            width="content"
         )  
 with col2:
     with st.container(border=True):
-        st.caption("Tren Kecenderungan Framing Pemberitaan 2024-2025")
+        st.caption("Tren Kecenderungan Framing Pemberitaan 24-25")
         st.metric(
             label="Negatif",
             value=f"{ambil_2025:,}",
             delta=f"{delta_persen:.2f}%",
-            delta_color="normal"
+            delta_color="normal",
+            width="content"
         ) 
 
 with st.container(border=True):

@@ -6,7 +6,8 @@ from streamlit_folium import st_folium
 
 
 st.set_page_config(layout="wide")
-st.title("Peta Persebaran Pemberitaan Rawan Kriminal")
+st.title("Peta GIS")
+st.text("Peta Persebaran Pemberitaan Isu Kriminalitas berdasarkan Detik.com ")
 
 df = pd.read_excel("fix_dataa.xlsx")
 df = pd.DataFrame(df)
@@ -76,7 +77,7 @@ if len(prov_summary) > 0:
                 f"""
                 ###  Insight Tahun {tahun_selected[0]}
                 Pada tahun **{tahun_selected[0]}** tercatat **{total_kasus} isu kriminalitas**.
-                Provinsi paling rawan adalah **{prov_max['provinsi']} ({prov_max['jumlah']} isu)**,
+                Provinsi yang paling sering diberitakan adalah **{prov_max['provinsi']} ({prov_max['jumlah']} isu)**,
                 sementara **{prov_min['provinsi']}** menjadi provinsi dengan isu terendah.
                 Jenis kriminal paling dominan adalah **{kriminal_dominan}**.
                 """
@@ -87,8 +88,8 @@ if len(prov_summary) > 0:
                 f"""
                 ###  Insight Periode {min(tahun_selected)}–{max(tahun_selected)}
                 Selama periode ini tercatat **{total_kasus} isu kriminalitas**.
-                Wilayah paling rawan adalah **{prov_max['provinsi']}**,
-                sedangkan **{prov_min['provinsi']}** relatif paling aman.
+                Wilayah paling sering diberitakan adalah **{prov_max['provinsi']}**,
+                sedangkan **{prov_min['provinsi']}** relatif jarang diberitakan.
                 Kriminalitas didominasi oleh **{kriminal_dominan}**.
                 """
             )
@@ -100,21 +101,21 @@ df_map = pd.DataFrame(grouped_kota)
 
 def kategori(jumlah):
     if jumlah > 40:
-        return "Sangat Rawan"
+        return "Sangat Tinggi"
     elif jumlah > 25:
-        return "Rawan"
+        return "Tinggi"
     elif jumlah > 10:
-        return "Cukup Rawan"
+        return "Cukup Tinggi"
     else:
-        return "Aman"
+        return "Rendah"
 
 df_map["kategori"] = df_map["jumlah"].apply(kategori)
 
 kategori_map = {
-    "Aman": 1,
-    "Cukup Rawan": 2,
-    "Rawan": 3,
-    "Sangat Rawan": 4
+    "Rendah": 1,
+    "Cukup Tinggi": 2,
+    "Tinggi": 3,
+    "Sangat Tinggi": 4
 }
 df_map["level"] = df_map["kategori"].map(kategori_map)
 
@@ -162,10 +163,10 @@ with col2:
         st.subheader("Keterangan Kategori")
         st.markdown(
             """
-            - **Sangat Rawan**: > 40 kasus
-            - **Rawan**: 26–40 kasus
-            - **Cukup Rawan**: 11–25 kasus
-            - **Aman**: ≤ 10 kasus
+            - **Sangat Tinggi**: > 40 Isu
+            - **Tinggi**: 26–40 Isu
+            - **Cukup Tinggi**: 11–25 Isu
+            - **Rendah**: ≤ 10 Isu
             """
         )
         st.divider()
