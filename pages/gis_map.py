@@ -8,7 +8,7 @@ st.set_page_config(layout="wide")
 st.title("Peta GIS")
 st.text("Peta Persebaran Pemberitaan Isu Kriminalitas berdasarkan Detik.com ")
 
-df = pd.read_excel("fix_dataa.xlsx")
+df = pd.read_excel("data/fix_dataa.xlsx")
 df = pd.DataFrame(df)
 
 #buat filter tahun sama provinsi
@@ -128,7 +128,7 @@ with col1:
     )
 
     folium.Choropleth(
-        geo_data="indonesia_prov.json",
+        geo_data="GeoJson/indonesia_prov.json",
         data=df_map,
         columns=["provinsi", "level"],
         key_on="feature.properties.NAME_1",
@@ -140,7 +140,7 @@ with col1:
     ).add_to(m)
 
     folium.GeoJson(
-        "indonesia_prov.json",
+        "GeoJson/indonesia_prov.json",
         name="Provinsi",
         style_function=lambda x: {
             'fillColor': 'transparent',

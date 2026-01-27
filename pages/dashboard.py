@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 
 st.title("Dashboard")
-st.text("Ringkasan isu kriminal yang sering diberitakan di Indonesia berdasarkan media online Detik.com (2024-2025)")
+st.text("Ringkasan isu kriminal yang sering diberitakan di Indonesia berdasarkan media online Detik.com periode 2024-2025")
 
-df = pd.read_excel("fix_dataa.xlsx")
+df = pd.read_excel("data/fix_dataa.xlsx")
 
 jenis_terbanyak = df["jenis_kriminal"].value_counts().idxmax().capitalize()
 kota_terbanyak = df["kota"].value_counts().idxmax().capitalize()
@@ -62,6 +62,9 @@ with st.container(border=True):
                 col1, col2 = st.columns([3, 1])  
             with col1:
                 st.markdown(f"**{row['judul']}**")
+                st.caption(f"{row['tanggal'].strftime('%d-%m-%Y')} | {row['sumber']}")
+
             with col2:
                 st.markdown(f"[Baca selengkapnya]({row['link']})")
+
         

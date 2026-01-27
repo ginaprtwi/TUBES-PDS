@@ -1,6 +1,8 @@
 pandas
 numpy
 openpyxl
-streamlit
+streamlit>=1.35.0
 folium
 streamlit-folium
+altair==4.2.2
+matplotlib
