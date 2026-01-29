@@ -9,13 +9,13 @@ dashboard_page = st.Page(
 
 isu_kota_page = st.Page(
     "pages/analisis_dominan.py",
-    title="Isu & Kota Dominan",
+    title="Isu & Wilayah Dominan",
     icon=":material/stacks:"
 )
 
 sumber_page = st.Page(
     "pages/analisis_sumber.py",
-    title="Sumber & Pola Pemberitaan",
+    title="Sumber Pemberitaan",
     icon=":material/monitoring:"
 )
 

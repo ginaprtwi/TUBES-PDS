@@ -2,7 +2,7 @@ import pandas as pd
 import re 
 from datetime import datetime
 
-df = pd.read_excel("raw_data.xlsx")
+df = pd.read_excel("o.xlsx")
 
 #biar sama format judulnya
 df["judul"] = df["judul"].str.lower()
@@ -274,4 +274,4 @@ df = df[(df["kota"] != "lainnya")].reset_index(drop=True)
 # drop thn selain 24 atau 25
 df = df[df["tahun"].isin([2024, 2025])].reset_index(drop=True)
 
-df.to_excel("fix_data.xlsx", index=False)
+df.to_excel("xxx.xlsx", index=False)
