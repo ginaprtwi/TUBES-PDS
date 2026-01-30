@@ -18,7 +18,7 @@ jenis_terbanyak = df["jenis_kriminal"].value_counts().idxmax()
 topik = df[df["jenis_kriminal"] == jenis_terbanyak]
 topik = topik.sort_values("tanggal", ascending=False)
 rekomendasi = topik.head(3)
-
+jenis_terbanyak = df["jenis_kriminal"].value_counts().idxmax().capitalize()
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:

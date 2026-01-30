@@ -1,140 +1,180 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
+import folium
+from streamlit_folium import st_folium
 
 st.set_page_config(layout="wide")
-st.title("Sentimen Pemberitaan")
-st.text("Visualisasi ini menampilkan distribusi sentimen berita kriminalitas berdasarkan tahun.")
+st.title("Peta GIS")
+st.text("Peta persebaran isu kriminalitas berdasarkan intensitas pemberitaan.")
 
-# Baca data
 df = pd.read_excel("data/fix_data.xlsx")
+df = pd.DataFrame(df)
 
-# Filter tahun
-list_tahun = sorted(df["tahun"].dropna().astype(int).unique())
-tahun_selected = st.pills(
-    "Pilih Tahun",
-    options=list_tahun,
-    default=list_tahun,
-    selection_mode="multi"
-)
+#buat filter tahun sama provinsi
+df["tahun"] = pd.to_numeric(df["tahun"], errors="coerce")
+list_tahun = df["tahun"].dropna().astype(int).unique()
+list_provinsi = df["provinsi"].dropna().astype(str).unique()
 
-# Filter data berdasarkan tahun
-if not tahun_selected:
-    df_filtered = pd.DataFrame()
-else:
-    df_filtered = df[df["tahun"].isin(tahun_selected)]
-
-# Label waktu
-if not tahun_selected:
-    label_waktu = "Tidak ada tahun dipilih"
-elif len(tahun_selected) == 1:
-    label_waktu = f"Tahun {tahun_selected[0]}"
-else:
-    label_waktu = f"Periode {min(tahun_selected)}–{max(tahun_selected)}"
-
-total_berita = len(df_filtered)
-
-# Hitung sentimen
-if not df_filtered.empty:
-    sentimen_counts = df_filtered["sentimen"].value_counts()
-    if not sentimen_counts.empty:
-        dominant_sentimen = sentimen_counts.idxmax()
-        dominant_sentimen_val = sentimen_counts.max()
-        persen_sentimen = dominant_sentimen_val / total_berita * 100
-    else:
-        dominant_sentimen = "Tidak ada data"
-        dominant_sentimen_val = 0
-        persen_sentimen = 0
-else:
-    dominant_sentimen = "Tidak ada data"
-    dominant_sentimen_val = 0
-    persen_sentimen = 0
-
-# Warna sentimen
-warna_sentimen = {
-    "Positif": "cornflowerblue",  
-    "Negatif": "indianred",       
-    "Netral": "lightgray"         
-}
-
-# Container visualisasi
 with st.container(border=True):
-    with st.expander("ℹ️ Keterangan Sentimen Berita"):
-        st.markdown("""
-        **Negatif:** Menyoroti dampak buruk atau keresahan akibat kriminalitas.  
-        **Netral:** Bersifat informatif tanpa penekanan emosi.  
-        **Positif:** Menekankan keberhasilan pengungkapan atau tindakan aparat.  
-        """)
-    st.markdown(f"**Proporsi Sentimen ({label_waktu})**")
-    col1, col2 = st.columns(2)
-
-    # Pie chart
-    with col1:
-        fig1, ax1 = plt.subplots(figsize=(7,7))
-        if df_filtered.empty or sentimen_counts.empty:
-            ax1.text(0.5,0.5,"Silakan pilih tahun", ha="center", va="center")
-        else:
-            sentimen_persen = sentimen_counts / sentimen_counts.sum() * 100
-            labels_sorted = sentimen_persen.index
-            warna_pie = [warna_sentimen.get(s,"gray") for s in labels_sorted]
-            ax1.pie(
-                sentimen_persen,
-                labels=labels_sorted,
-                autopct="%1.1f%%",
-                startangle=140,
-                colors=warna_pie,
-                textprops={'color':"black"}
-            )
-            ax1.set_title("Distribusi Sentimen Keseluruhan")
-        st.pyplot(fig1, use_container_width=True)
-
-    # Bar chart per jenis kriminal
-    with col2:
-        if not df_filtered.empty:
-            grouped_isu_sentimen = df_filtered.groupby(["jenis_kriminal","sentimen"])["judul"].count().unstack(fill_value=0)
-            stack_order = ["Positif", "Netral", "Negatif"]
-            grouped_isu_sentimen = grouped_isu_sentimen.reindex(columns=stack_order, fill_value=0)
-            grouped_isu_sentimen["total"] = grouped_isu_sentimen.sum(axis=1)
-            grouped_isu_sentimen = grouped_isu_sentimen.sort_values(by="total", ascending=False).drop(columns="total")
-            
-            fig2, ax2 = plt.subplots(figsize=(8,6))
-            warna_bar = [warna_sentimen[s] for s in grouped_isu_sentimen.columns]
-            grouped_isu_sentimen.plot(
-                kind="bar",
-                stacked=True,
-                ax=ax2,
-                color=warna_bar,
-                edgecolor="black"
-            )
-            ax2.set_ylabel("Jumlah Berita")
-            ax2.set_xlabel("Jenis Isu")
-            ax2.set_title("Jumlah Berita per Sentimen untuk Setiap Jenis Kriminal")
-            plt.xticks(rotation=45, ha="right")
-            plt.tight_layout()
-            st.pyplot(fig2)
-        else:
-            st.info("Silakan pilih tahun")
-
-# Insight
-with st.container(border=True):
-    st.markdown(f"**Insight ({label_waktu})**")
-    if total_berita == 0:
-        st.markdown("Tidak terdapat data yang dapat dianalisis karena **belum ada tahun dipilih**.")
-    else:
-        isu_counts_total = df_filtered["jenis_kriminal"].value_counts()
-        if not isu_counts_total.empty:
-            isu_teratas = isu_counts_total.idxmax()
-            isu_teratas_val = isu_counts_total.max()
-        else:
-            isu_teratas = "Tidak ada data"
-            isu_teratas_val = 0
+    col3, col4 = st.columns([2, 4])
+    with col3:
+        tahun_selected = st.pills(
+            "Pilih Tahun",
+            options=list_tahun,
+            default=list_tahun,
+            selection_mode="multi",
+        )
         
-        st.info(
-            f"ℹ️ Berdasarkan analisis pada **{label_waktu}**, Sentimen yang paling dominan adalah **{dominant_sentimen}** "
-            f"(**{dominant_sentimen_val}** berita, **{persen_sentimen:.1f}%** dari total). "
-            f"Jenis kriminal yang paling sering diberitakan adalah **{isu_teratas}** "
-            f"(**{isu_teratas_val}** berita)."
+    
+    with col4:
+        
+        with st.popover("Pilih Provinsi", width="stretch"):
+            provinsi_selected = st.multiselect(
+                "Pilih Provinsi",
+                options=list_provinsi,
+                default=list_provinsi,
+                key="provinsi_selected",
+            )
+            
+            st.button("Semua Provinsi",on_click=lambda: st.session_state.update({"provinsi_selected": list(list_provinsi)}))
+        
+#data yg difilter user
+dftahun = df[
+    (df["tahun"].isin(tahun_selected)) &
+    (df["provinsi"].isin(provinsi_selected))
+]
+
+#Insightt 
+
+total_kasus = len(dftahun)  
+print("total kasus:",total_kasus)
+prov_summary = (dftahun.groupby("provinsi")["judul"].count().reset_index(name="jumlah"))
+print("prov_summary",prov_summary)
+
+if len(prov_summary) > 0:   
+    prov_max = prov_summary.loc[prov_summary["jumlah"].idxmax()]  
+    prov_min = prov_summary.loc[prov_summary["jumlah"].idxmin()]  
+    print("max",prov_max)
+    print("min", prov_min)
+
+    kriminal_dominan = dftahun["jenis_kriminal"].value_counts().idxmax()  
+
+    with st.container(border=True):  
+        if len(provinsi_selected) == 1 and len(tahun_selected) == 1 or (len(provinsi_selected) == 1 and len(tahun_selected) > 1):
+            st.markdown(f"**Insight Periode {tahun_selected[0]}**")
+            st.markdown(  
+                f"""
+                Di provinsi **{provinsi_selected[0]}** selama periode {tahun_selected[0]}
+                tercatat **{total_kasus} isu kriminalitas**.
+                Jenis kriminal paling dominan adalah **{kriminal_dominan}**.
+                """
+            )
+        
+        elif len(tahun_selected) == 1:
+            st.markdown(f"**Insight Periode {tahun_selected[0]}**")
+            st.markdown(  
+                f"""
+                Pada tahun **{tahun_selected[0]}** tercatat **{total_kasus} isu kriminalitas**.
+                Provinsi paling rawan adalah **{prov_max['provinsi']} ({prov_max['jumlah']} isu)**,
+                sementara **{prov_min['provinsi']}** menjadi provinsi dengan isu terendah.
+                Jenis kriminal paling dominan adalah **{kriminal_dominan}**.
+                """
+            )
+        
+        else:
+            st.markdown(f"**Insight Periode {min(tahun_selected)}–{max(tahun_selected)}**")
+            st.markdown(  
+                f"""
+                Selama periode ini tercatat **{total_kasus} isu kriminalitas**.
+                Wilayah paling rawan adalah **{prov_max['provinsi']}**,
+                sedangkan **{prov_min['provinsi']}** relatif paling aman.
+                Kriminalitas didominasi oleh **{kriminal_dominan}**.
+                """
+            )
+
+#untuk map
+
+grouped_kota = dftahun.groupby("provinsi")["judul"].count().reset_index(name='jumlah')
+df_map = pd.DataFrame(grouped_kota)
+
+def kategori(jumlah):
+    if jumlah > 40:
+        return "Sangat Tinggi"
+    elif jumlah > 25:
+        return "Tinggi"
+    elif jumlah > 10:
+        return "Cukup Tinggi"
+    else:
+        return "Rendah"
+
+df_map["kategori"] = df_map["jumlah"].apply(kategori)
+
+kategori_map = {
+    "Rendah": 1,
+    "Cukup Tinggi": 2,
+    "Tinggi": 3,
+    "Sangat Tinggi": 4
+}
+df_map["level"] = df_map["kategori"].map(kategori_map)
+
+
+col1, col2 = st.columns([5, 2])
+with col1:
+    m = folium.Map(
+        location=[-2.5, 118],
+        zoom_start=5,
+        tiles="CartoDB positron"
+    )
+
+    folium.Choropleth(
+        geo_data="GeoJson/indonesia_prov.json",
+        data=df_map,
+        columns=["provinsi", "level"],
+        key_on="feature.properties.NAME_1",
+        fill_color="RdYlGn_r",
+        threshold_scale=[1, 2, 3, 4, 5],
+        fill_opacity=0.7,
+        line_opacity=0.4,
+        nan_fill_opacity=0.4,
+    ).add_to(m)
+
+    folium.GeoJson(
+        "GeoJson/indonesia_prov.json",
+        name="Provinsi",
+        style_function=lambda x: {
+            'fillColor': 'transparent',
+            'color': 'black',
+            'weight': 0.5,
+            'fillOpacity': 0
+        },
+        tooltip=folium.GeoJsonTooltip(
+            fields=["NAME_1"],
+            aliases=["Provinsi:"],
+            sticky=True
+        )
+    ).add_to(m)
+
+    st_folium(m, use_container_width=True, height=550)
+    with st.container(border=True):
+        st.info("ℹ️ **Temuan** ini dapat digunakan untuk memahami **distribusi spasial eksposur** pemberitaan kriminal antar wilayah, mengidentifikasi wilayah dengan **intensitas pemberitaan tinggi dan rendah**, "
+            "dasar analisis **ketimpangan eksposur media antar provinsi**, "
+            "dan sebagai referensi **pemantauan isu kriminal** berdasarkan **wilayah dominan**."
         )
 
-st.warning("📝 Analisis ini berbasis pemberitaan media, bukan data kejadian kriminal resmi.")
+with col2:
+    with st.container(border=True):
+        st.markdown("**Keterangan Kategori**")
+        st.markdown(
+            """
+            - **Sangat Tinggi**: > 40 isu
+            - **Tinggi**: 26–40 isu
+            - **Cukup Tinggi**: 11–25 isu
+            - **Rendah**: ≤ 10 isu
+            """
+        )
+        st.divider()
+        st.markdown("**Data**")
+        st.dataframe(df_map, width="stretch") 
+
+
+
