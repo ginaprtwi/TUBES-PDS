@@ -5,12 +5,11 @@ import numpy as np
 
 st.set_page_config(layout="wide")
 st.title("Isu & Wilayah Dominan")
-st.text("Visualisasi ini menunjukkan isu kriminal dan wilayah yang paling sering diberitakan, membantu memprioritaskan pemantauan berdasarkan intensitas berita.")
+st.text("Visualisasi ini menunjukkan isu kriminal dan wilayah dengan intensitas pemberitaan tertinggi.")
 
-# Load data
 df = pd.read_excel("data/fix_data.xlsx")
 
-# --- Filter Tahun ---
+#Filter Tahun
 df["tahun"] = pd.to_numeric(df["tahun"], errors="coerce")
 list_tahun = sorted(df["tahun"].dropna().astype(int).unique())
 
@@ -34,7 +33,7 @@ else:
     else:
         label_waktu = f"Periode {min(tahun_selected)}–{max(tahun_selected)}"
 
-# --- Total kasus ---
+#Total kasus
 total_kasus = len(dftahun)
 grouped_jenis = (dftahun.groupby("jenis_kriminal")["judul"].count().sort_values(ascending=False) if not dftahun.empty else pd.Series(dtype=int))
 grouped_prov = (dftahun.groupby("provinsi")["judul"].count().sort_values(ascending=False) if not dftahun.empty else pd.Series(dtype=int))
@@ -44,12 +43,10 @@ top_prov_nama = grouped_prov.idxmax() if not grouped_prov.empty else "-"
 top_prov_val = grouped_prov.max() if not grouped_prov.empty else 0
 bottom_prov_nama = grouped_prov.idxmin() if not grouped_prov.empty else "-"
 
-# --- Grafik ---
+
 with st.container(border=True):
     st.markdown(f"**Isu & Wilayah Dominan({label_waktu})**")
     col1, col2 = st.columns(2)
-
-    # --- Bar Chart Jenis Kriminal ---
     with col1:
         fig1, ax1 = plt.subplots(figsize=(10, 7))
         if not dftahun.empty:
@@ -60,12 +57,12 @@ with st.container(border=True):
                 aggfunc="count"
             ).fillna(0)
 
-            # Sorting berdasarkan total isu
+            #urutkan
             df_pivot['total'] = df_pivot.sum(axis=1)
             df_pivot = df_pivot.sort_values(by='total', ascending=False).drop(columns='total')
 
-            # WARNA LUCU PERSIS SUMBER
-            warna = plt.cm.Paired(np.linspace(0, 1, df_pivot.shape[1]))
+            warna = plt.cm.Blues(np.linspace(0.35, 0.85, df_pivot.shape[1]))
+
             df_pivot.plot(
                 kind="bar",
                 stacked=True,
@@ -80,14 +77,12 @@ with st.container(border=True):
         plt.tight_layout()
         st.pyplot(fig1, use_container_width=False)
 
-    # --- Line Chart Top 10 Provinsi ---
     with col2:
         fig2, ax2 = plt.subplots(figsize=(10, 7))
+        #buat urutin line grafik nya
+        top_10_p = grouped_prov.head(10).sort_values(ascending=False).index
+        df_top = dftahun[dftahun["provinsi"].isin(top_10_p)]
         if not grouped_prov.empty:
-            # ambil top 10 provinsi & sort descending
-            top_10_p = grouped_prov.head(10).sort_values(ascending=False).index
-            df_top = dftahun[dftahun["provinsi"].isin(top_10_p)]
-
             df_pivot_prov = df_top.pivot_table(
                 index="provinsi",
                 columns="tahun",
@@ -95,17 +90,12 @@ with st.container(border=True):
                 aggfunc="count"
             ).fillna(0)
 
-            # urutkan index sesuai top 10
-            df_pivot_prov = df_pivot_prov.reindex(top_10_p)
-
-            warna_line = plt.cm.Paired(np.linspace(0,1,len(df_pivot_prov.columns)))
-            markers = ['o','s','D','^','v','<','>','p','*','H']  # marker lucu
-
+            warna_line = plt.cm.Blues(np.linspace(0.4, 0.8, len(df_pivot_prov.columns)))
             for i, col in enumerate(df_pivot_prov.columns):
                 ax2.plot(
                     df_pivot_prov.index,
                     df_pivot_prov[col],
-                    marker=markers[i % len(markers)],
+                    marker="o",
                     color=warna_line[i],
                     label=str(col)
                 )
@@ -118,7 +108,7 @@ with st.container(border=True):
             plt.tight_layout()
             st.pyplot(fig2, use_container_width=False)
 
-# --- Insight ---
+#Insight
 with st.container(border=True):
     st.markdown(f"**Insight ({label_waktu})**")
     if total_kasus == 0:
@@ -127,10 +117,10 @@ with st.container(border=True):
         )
     else:
         st.info(
-    f"ℹ️ Berdasarkan hasil analisis pada **{label_waktu}**, tercatat **{total_kasus}** isu kriminalitas yang diberitakan oleh Detik.com. "
+    f"ℹ️ Berdasarkan hasil analisis pada **{label_waktu}**, tercatat **{total_kasus}** isu kriminalitas yang diberitakan oleh **Detik.com**. "
     f"Isu kriminal yang paling dominan adalah **{kriminal_dominan}**, dengan **{top_prov_nama}** sebagai wilayah yang paling sering diberitakan "
     f"**({top_prov_val}** isu), sementara **{bottom_prov_nama}** memiliki intensitas pemberitaan terendah. "
-    "Temuan ini berguna untuk mengidentifikasi pola dominasi isu dan wilayah dalam pemberitaan kriminalitas, terutama untuk wilayah yang jarang terekspos media."
+    "**Temuan** ini berguna untuk mengidentifikasi **pola dominasi isu** dan **wilayah dalam pemberitaan kriminalitas**, terutama untuk wilayah yang **jarang terekspos media**."
 )
 
 st.warning("📝 Analisis ini berbasis pemberitaan media, bukan berdasarkan data kejadian kriminal resmi.")
